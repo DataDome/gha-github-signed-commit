@@ -29993,8 +29993,7 @@ function execGit(args) {
         const defaultArgs = ['-C', workspace];
         core.debug('execGit() - defaultArgs: ' + JSON.stringify(defaultArgs));
         core.debug('execGit() - args: ' + JSON.stringify(args));
-        const mergedArgs = [];
-        mergedArgs.concat(defaultArgs).concat(args);
+        const mergedArgs = defaultArgs.concat(args);
         core.debug('execGit() - mergedArgs: ' + JSON.stringify(mergedArgs));
         yield (0, exec_1.exec)('git', mergedArgs, {
             silent: true,

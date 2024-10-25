@@ -20,8 +20,7 @@ async function execGit(args: string[]) {
 
   core.debug('execGit() - args: ' + JSON.stringify(args))
 
-  const mergedArgs: string[] = []
-  mergedArgs.concat(defaultArgs).concat(args)
+  const mergedArgs = defaultArgs.concat(args)
   core.debug('execGit() - mergedArgs: ' + JSON.stringify(mergedArgs))
 
   await exec('git', mergedArgs, {
