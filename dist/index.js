@@ -29989,10 +29989,11 @@ function execGit(args) {
         const debugOutput = [];
         const warningOutput = [];
         const errorOutput = [];
+        core.debug('execGit() - args: ' + JSON.stringify(args));
         const workspace = (0, cwd_1.getWorkspace)();
         const gitArgs = ['-C', workspace];
         gitArgs.concat(args);
-        core.debug(JSON.stringify(gitArgs));
+        core.debug('execGit() - gitArgs: ' + JSON.stringify(gitArgs));
         yield (0, exec_1.exec)('git', gitArgs, {
             silent: true,
             ignoreReturnCode: true,
