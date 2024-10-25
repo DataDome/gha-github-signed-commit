@@ -14,14 +14,17 @@ async function execGit(args: string[]) {
   const warningOutput: string[] = []
   const errorOutput: string[] = []
 
+  const workspace = getWorkspace()
+  const defaultArgs = ['-C', workspace]
+  core.debug('execGit() - defaultArgs: ' + JSON.stringify(defaultArgs))
+
   core.debug('execGit() - args: ' + JSON.stringify(args))
 
-  const workspace = getWorkspace()
-  const gitArgs = ['-C', workspace]
-  gitArgs.concat(args)
-  core.debug('execGit() - gitArgs: ' + JSON.stringify(gitArgs))
+  const mergedArgs: string[] = []
+  mergedArgs.concat(defaultArgs).concat(args)
+  core.debug('execGit() - mergedArgs: ' + JSON.stringify(mergedArgs))
 
-  await exec('git', gitArgs, {
+  await exec('git', mergedArgs, {
     silent: true,
     ignoreReturnCode: true,
     listeners: {

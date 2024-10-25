@@ -29989,12 +29989,14 @@ function execGit(args) {
         const debugOutput = [];
         const warningOutput = [];
         const errorOutput = [];
-        core.debug('execGit() - args: ' + JSON.stringify(args));
         const workspace = (0, cwd_1.getWorkspace)();
-        const gitArgs = ['-C', workspace];
-        gitArgs.concat(args);
-        core.debug('execGit() - gitArgs: ' + JSON.stringify(gitArgs));
-        yield (0, exec_1.exec)('git', gitArgs, {
+        const defaultArgs = ['-C', workspace];
+        core.debug('execGit() - defaultArgs: ' + JSON.stringify(defaultArgs));
+        core.debug('execGit() - args: ' + JSON.stringify(args));
+        const mergedArgs = [];
+        mergedArgs.concat(defaultArgs).concat(args);
+        core.debug('execGit() - mergedArgs: ' + JSON.stringify(mergedArgs));
+        yield (0, exec_1.exec)('git', mergedArgs, {
             silent: true,
             ignoreReturnCode: true,
             listeners: {
