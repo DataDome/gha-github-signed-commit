@@ -62,9 +62,7 @@ export async function pushCurrentBranch() {
 }
 
 export async function addFileChanges(globPatterns: string[]) {
-  const workspace = getWorkspace()
-  const workspacePaths = globPatterns.map((p) => join(workspace, p))
-  await execGit(['add', '--', ...workspacePaths])
+  await execGit(['add', '--', ...globPatterns])
 }
 
 function processFileChanges(output: string[]) {

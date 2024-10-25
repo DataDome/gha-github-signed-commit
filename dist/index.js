@@ -29982,7 +29982,6 @@ exports.addFileChanges = addFileChanges;
 exports.getFileChanges = getFileChanges;
 const core = __importStar(__nccwpck_require__(7484));
 const exec_1 = __nccwpck_require__(5236);
-const node_path_1 = __nccwpck_require__(6760);
 const cwd_1 = __nccwpck_require__(9827);
 function execGit(args) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -30039,9 +30038,7 @@ function pushCurrentBranch() {
 }
 function addFileChanges(globPatterns) {
     return __awaiter(this, void 0, void 0, function* () {
-        const workspace = (0, cwd_1.getWorkspace)();
-        const workspacePaths = globPatterns.map((p) => (0, node_path_1.join)(workspace, p));
-        yield execGit(['add', '--', ...workspacePaths]);
+        yield execGit(['add', '--', ...globPatterns]);
     });
 }
 function processFileChanges(output) {
