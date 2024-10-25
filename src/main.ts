@@ -39,12 +39,14 @@ export async function run(): Promise<void> {
     const inputRepo = getInput('repo')
     const selectedRepo = inputRepo ? inputRepo : repo
 
-    core.warning('Pushing local and current branch to remote before proceeding')
     if (
       selectedOwner == owner &&
       selectedRepo == repo &&
       selectedBranch !== branch
     ) {
+      core.warning(
+        'Pushing local and current branch to remote before proceeding'
+      )
       // Git commands
       await switchBranch(selectedBranch)
       await pushCurrentBranch()
@@ -90,7 +92,10 @@ export async function run(): Promise<void> {
         `proceed with file commit, input: ${JSON.stringify(filePaths)}`
       )
 
+      core.debug('Adding files to git index according to "filePaths"')
       await addFileChanges(filePaths)
+
+      core.debug('Getting changed files')
       const fileChanges = await getFileChanges()
       const fileCount =
         (fileChanges.additions?.length ?? 0) +

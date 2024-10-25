@@ -29992,6 +29992,7 @@ function execGit(args) {
         const workspace = (0, cwd_1.getWorkspace)();
         const gitArgs = ['-C', workspace];
         gitArgs.concat(args);
+        core.debug(JSON.stringify(gitArgs));
         yield (0, exec_1.exec)('git', gitArgs, {
             silent: true,
             ignoreReturnCode: true,
@@ -30402,10 +30403,10 @@ function run() {
             core.debug('* repo');
             const inputRepo = (0, input_1.getInput)('repo');
             const selectedRepo = inputRepo ? inputRepo : repo;
-            core.warning('Pushing local and current branch to remote before proceeding');
             if (selectedOwner == owner &&
                 selectedRepo == repo &&
                 selectedBranch !== branch) {
+                core.warning('Pushing local and current branch to remote before proceeding');
                 // Git commands
                 yield (0, git_1.switchBranch)(selectedBranch);
                 yield (0, git_1.pushCurrentBranch)();
@@ -30439,7 +30440,9 @@ function run() {
             }
             else {
                 core.debug(`proceed with file commit, input: ${JSON.stringify(filePaths)}`);
+                core.debug('Adding files to git index according to "filePaths"');
                 yield (0, git_1.addFileChanges)(filePaths);
+                core.debug('Getting changed files');
                 const fileChanges = yield (0, git_1.getFileChanges)();
                 const fileCount = ((_d = (_c = fileChanges.additions) === null || _c === void 0 ? void 0 : _c.length) !== null && _d !== void 0 ? _d : 0) +
                     ((_f = (_e = fileChanges.deletions) === null || _e === void 0 ? void 0 : _e.length) !== null && _f !== void 0 ? _f : 0);

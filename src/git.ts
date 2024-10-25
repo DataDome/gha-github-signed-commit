@@ -17,6 +17,7 @@ async function execGit(args: string[]) {
   const workspace = getWorkspace()
   const gitArgs = ['-C', workspace]
   gitArgs.concat(args)
+  core.debug(JSON.stringify(gitArgs))
 
   await exec('git', gitArgs, {
     silent: true,
