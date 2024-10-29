@@ -1,3 +1,4 @@
+import { join } from 'node:path'
 import * as core from '@actions/core'
 import { GraphqlResponseError } from '@octokit/graphql'
 import { RequestParameters } from '@octokit/types'
@@ -12,8 +13,9 @@ import {
 } from '@octokit/graphql-schema'
 
 import { graphqlClient } from './client'
+import { RepositoryWithCommitHistory } from './types'
 import { getBlob } from '../blob'
-import { RepositoryWithCommitHistory } from '../github/types'
+import { getWorkspace } from '../utils/cwd'
 
 function formatLogMessage(...params: Record<string, unknown>[]): string {
   return Object.entries(Object.assign({}, ...params) as Record<string, unknown>)
@@ -125,9 +127,12 @@ export async function createCommitOnBranch(
   branch: CommittableBranch,
   fileChanges: FileChanges
 ): Promise<CreateCommitOnBranchPayload> {
+  // Handle workspace
+  const workspace = getWorkspace()
+
   if (fileChanges.additions) {
     const promises = fileChanges.additions.map((file) =>
-      getBlob(file.path).load()
+      getBlob(join(workspace, file.path)).load()
     )
     fileChanges.additions = await Promise.all(promises)
   }

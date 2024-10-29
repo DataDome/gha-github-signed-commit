@@ -29982,7 +29982,6 @@ exports.addFileChanges = addFileChanges;
 exports.getFileChanges = getFileChanges;
 const core = __importStar(__nccwpck_require__(7484));
 const exec_1 = __nccwpck_require__(5236);
-const node_path_1 = __nccwpck_require__(6760);
 const cwd_1 = __nccwpck_require__(9827);
 function execGit(args) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -30051,24 +30050,22 @@ function addFileChanges(globPatterns) {
 function processFileChanges(output) {
     const additions = [];
     const deletions = [];
-    // Handle workspace
-    const workspace = (0, cwd_1.getWorkspace)();
     for (const line of output) {
         const staged = line.charAt(0);
         const filePath = line.slice(3);
         switch (staged) {
             case 'D': {
-                deletions.push({ path: (0, node_path_1.join)(workspace, filePath) });
+                deletions.push({ path: filePath });
                 break;
             }
             case '?':
             case 'A':
             case 'M': {
-                additions.push({ path: (0, node_path_1.join)(workspace, filePath), contents: '' });
+                additions.push({ path: filePath, contents: '' });
                 break;
             }
             case 'R': {
-                const [from, to] = (0, node_path_1.join)(workspace, filePath).split('->');
+                const [from, to] = filePath.split('->');
                 deletions.push({ path: from.trim() });
                 additions.push({ path: to.trim(), contents: '' });
                 break;
@@ -30161,10 +30158,12 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getRepository = getRepository;
 exports.createCommitOnBranch = createCommitOnBranch;
 exports.createTagOnCommit = createTagOnCommit;
+const node_path_1 = __nccwpck_require__(6760);
 const core = __importStar(__nccwpck_require__(7484));
 const graphql_1 = __nccwpck_require__(7);
 const client_1 = __nccwpck_require__(6584);
 const blob_1 = __nccwpck_require__(1408);
+const cwd_1 = __nccwpck_require__(9827);
 function formatLogMessage(...params) {
     return Object.entries(Object.assign({}, ...params))
         .map(([key, value]) => {
@@ -30256,8 +30255,10 @@ const createCommitMutation = `
 `;
 function createCommitOnBranch(currentCommit, commitMessage, branch, fileChanges) {
     return __awaiter(this, void 0, void 0, function* () {
+        // Handle workspace
+        const workspace = (0, cwd_1.getWorkspace)();
         if (fileChanges.additions) {
-            const promises = fileChanges.additions.map((file) => (0, blob_1.getBlob)(file.path).load());
+            const promises = fileChanges.additions.map((file) => (0, blob_1.getBlob)((0, node_path_1.join)(workspace, file.path)).load());
             fileChanges.additions = yield Promise.all(promises);
         }
         const commitInput = {
