@@ -14,7 +14,11 @@ async function execGit(args: string[]) {
   const warningOutput: string[] = []
   const errorOutput: string[] = []
 
-  await exec('git', args, {
+  const workspace = getWorkspace()
+  const gitArgs = ['-C', workspace]
+  gitArgs.concat(args)
+
+  await exec('git', gitArgs, {
     silent: true,
     ignoreReturnCode: true,
     listeners: {
@@ -55,7 +59,6 @@ export async function pushCurrentBranch() {
 export async function addFileChanges(globPatterns: string[]) {
   const workspace = getWorkspace()
   const workspacePaths = globPatterns.map((p) => join(workspace, p))
-
   await execGit(['add', '--', ...workspacePaths])
 }
 

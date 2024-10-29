@@ -29989,7 +29989,10 @@ function execGit(args) {
         const debugOutput = [];
         const warningOutput = [];
         const errorOutput = [];
-        yield (0, exec_1.exec)('git', args, {
+        const workspace = (0, cwd_1.getWorkspace)();
+        const gitArgs = ['-C', workspace];
+        gitArgs.concat(args);
+        yield (0, exec_1.exec)('git', gitArgs, {
             silent: true,
             ignoreReturnCode: true,
             listeners: {
