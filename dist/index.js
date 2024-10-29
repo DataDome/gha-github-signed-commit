@@ -29988,10 +29988,16 @@ function execGit(args) {
         const debugOutput = [];
         const warningOutput = [];
         const errorOutput = [];
+        const defaultArgs = [];
+        // Handle workspace
         const workspace = (0, cwd_1.getWorkspace)();
-        const defaultArgs = ['-C', workspace];
+        if (workspace !== '') {
+            defaultArgs.push('-C');
+            defaultArgs.push(workspace);
+            core.debug('execGit() - Adding GHA parameter "workspace" to git cli args');
+        }
         core.debug('execGit() - defaultArgs: ' + JSON.stringify(defaultArgs));
-        core.debug('execGit() - args: ' + JSON.stringify(args));
+        core.debug('execGit() - args parameter: ' + JSON.stringify(args));
         const mergedArgs = defaultArgs.concat(args);
         core.debug('execGit() - mergedArgs: ' + JSON.stringify(mergedArgs));
         yield (0, exec_1.exec)('git', mergedArgs, {

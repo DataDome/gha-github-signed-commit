@@ -1,6 +1,5 @@
 import * as core from '@actions/core'
 import { exec } from '@actions/exec'
-import { join } from 'node:path'
 import {
   FileChanges,
   FileAddition,
@@ -14,11 +13,18 @@ async function execGit(args: string[]) {
   const warningOutput: string[] = []
   const errorOutput: string[] = []
 
-  const workspace = getWorkspace()
-  const defaultArgs = ['-C', workspace]
-  core.debug('execGit() - defaultArgs: ' + JSON.stringify(defaultArgs))
+  const defaultArgs: string[] = []
 
-  core.debug('execGit() - args: ' + JSON.stringify(args))
+  // Handle workspace
+  const workspace = getWorkspace()
+  if (workspace !== '') {
+    defaultArgs.push('-C')
+    defaultArgs.push(workspace)
+    core.debug('execGit() - Adding GHA parameter "workspace" to git cli args')
+  }
+
+  core.debug('execGit() - defaultArgs: ' + JSON.stringify(defaultArgs))
+  core.debug('execGit() - args parameter: ' + JSON.stringify(args))
 
   const mergedArgs = defaultArgs.concat(args)
   core.debug('execGit() - mergedArgs: ' + JSON.stringify(mergedArgs))

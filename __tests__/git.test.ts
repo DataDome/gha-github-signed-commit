@@ -190,7 +190,7 @@ describe('Git CLI', () => {
       await addFileChanges(['*.ts', '~/.bashrc'])
       expect(execMock).toHaveBeenCalledWith(
         'git',
-        ['add', '--', '/test-workspace/*.ts', '/test-workspace/~/.bashrc'],
+        ['-C', '/test-workspace', 'add', '--', '*.ts', '~/.bashrc'],
         expect.objectContaining({
           listeners: { stdline: expect.anything(), errline: expect.anything() },
         })
@@ -283,7 +283,7 @@ describe('Git CLI', () => {
       const changes = await getFileChanges()
       expect(execMock).toHaveBeenCalledWith(
         'git',
-        ['status', '-suno', '--porcelain'],
+        ['-C', '/test-workspace', 'status', '-suno', '--porcelain'],
         expect.objectContaining({
           listeners: { stdline: expect.anything(), errline: expect.anything() },
         })
