@@ -29857,7 +29857,12 @@ const base64_encoder_1 = __importDefault(__nccwpck_require__(5564));
 class Blob {
     constructor(path) {
         const cwd = (0, cwd_1.getCwd)();
-        this.absolutePath = path.startsWith(cwd) ? path : (0, node_path_1.join)(cwd, path);
+        const workspace = (0, cwd_1.getWorkspace)();
+        core.debug('Blob.constructor() - Add workspace directory to filepath');
+        const tmpPath = (0, node_path_1.join)(workspace, path);
+        // Add GHA cwd
+        this.absolutePath = tmpPath.startsWith(cwd) ? tmpPath : (0, node_path_1.join)(cwd, tmpPath);
+        // Remove GHA cwd
         this.path = path.startsWith(cwd)
             ? path.replace(new RegExp(cwd, 'g'), '')
             : path;
@@ -29880,7 +29885,7 @@ class Blob {
                 else if (typeof chunk === 'string')
                     chunks.push(node_buffer_1.Buffer.from(chunk));
                 // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-                core.debug(`received blob: ${chunk}`);
+                core.debug(`Blob.load() - filepath ${this.absolutePath}, received blob: ${chunk}`);
             });
             stream.on('error', (err) => {
                 throw new Error(`Read file failed, error: ${err.message}, path: ${this.absolutePath}`);
@@ -30158,12 +30163,10 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getRepository = getRepository;
 exports.createCommitOnBranch = createCommitOnBranch;
 exports.createTagOnCommit = createTagOnCommit;
-const node_path_1 = __nccwpck_require__(6760);
 const core = __importStar(__nccwpck_require__(7484));
 const graphql_1 = __nccwpck_require__(7);
 const client_1 = __nccwpck_require__(6584);
 const blob_1 = __nccwpck_require__(1408);
-const cwd_1 = __nccwpck_require__(9827);
 function formatLogMessage(...params) {
     return Object.entries(Object.assign({}, ...params))
         .map(([key, value]) => {
@@ -30255,10 +30258,8 @@ const createCommitMutation = `
 `;
 function createCommitOnBranch(currentCommit, commitMessage, branch, fileChanges) {
     return __awaiter(this, void 0, void 0, function* () {
-        // Handle workspace
-        const workspace = (0, cwd_1.getWorkspace)();
         if (fileChanges.additions) {
-            const promises = fileChanges.additions.map((file) => (0, blob_1.getBlob)((0, node_path_1.join)(workspace, file.path)).load());
+            const promises = fileChanges.additions.map((file) => (0, blob_1.getBlob)(file.path).load());
             fileChanges.additions = yield Promise.all(promises);
         }
         const commitInput = {
@@ -30415,7 +30416,7 @@ function run() {
             if (selectedOwner == owner &&
                 selectedRepo == repo &&
                 selectedBranch !== branch) {
-                core.warning('Pushing local and current branch to remote before proceeding');
+                core.notice('Pushing local and current branch to remote before proceeding');
                 // Git commands
                 yield (0, git_1.switchBranch)(selectedBranch);
                 yield (0, git_1.pushCurrentBranch)();
@@ -30448,7 +30449,7 @@ function run() {
                 core.warning('skip file commit, empty files input');
             }
             else {
-                core.info(`proceed with file commit, input: ${JSON.stringify(filePaths)}`);
+                core.info(`Proceed with file commit, input: ${JSON.stringify(filePaths)}`);
                 core.info('Adding files to git index according to "filePaths"');
                 yield (0, git_1.addFileChanges)(filePaths);
                 core.info('Getting changed files');

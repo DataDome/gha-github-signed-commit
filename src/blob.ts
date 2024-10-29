@@ -6,16 +6,26 @@ import { Readable } from 'node:stream'
 import { finished } from 'node:stream/promises'
 import { FileAddition } from '@octokit/graphql-schema'
 
-import { getCwd } from './utils/cwd'
+import { getCwd, getWorkspace } from './utils/cwd'
 import Base64Encoder from './stream/base64-encoder'
 
 export class Blob {
+  // Returned as a property of FileChange object
   path: string
+  // Used for content access
   absolutePath: string
 
   constructor(path: string) {
     const cwd = getCwd()
-    this.absolutePath = path.startsWith(cwd) ? path : join(cwd, path)
+    const workspace = getWorkspace()
+
+    core.debug('Blob.constructor() - Add workspace directory to filepath')
+    const tmpPath = join(workspace, path)
+
+    // Add GHA cwd
+    this.absolutePath = tmpPath.startsWith(cwd) ? tmpPath : join(cwd, tmpPath)
+
+    // Remove GHA cwd
     this.path = path.startsWith(cwd)
       ? path.replace(new RegExp(cwd, 'g'), '')
       : path
@@ -40,7 +50,9 @@ export class Blob {
       else if (typeof chunk === 'string') chunks.push(Buffer.from(chunk))
 
       // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-      core.debug(`received blob: ${chunk}`)
+      core.debug(
+        `Blob.load() - filepath ${this.absolutePath}, received blob: ${chunk}`
+      )
     })
 
     stream.on('error', (err) => {

@@ -44,7 +44,7 @@ export async function run(): Promise<void> {
       selectedRepo == repo &&
       selectedBranch !== branch
     ) {
-      core.warning(
+      core.notice(
         'Pushing local and current branch to remote before proceeding'
       )
       // Git commands
@@ -88,7 +88,7 @@ export async function run(): Promise<void> {
     if (filePaths.length <= 0) {
       core.warning('skip file commit, empty files input')
     } else {
-      core.info(`proceed with file commit, input: ${JSON.stringify(filePaths)}`)
+      core.info(`Proceed with file commit, input: ${JSON.stringify(filePaths)}`)
 
       core.info('Adding files to git index according to "filePaths"')
       await addFileChanges(filePaths)
