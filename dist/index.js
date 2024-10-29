@@ -29989,6 +29989,7 @@ function execGit(args) {
         const debugOutput = [];
         const warningOutput = [];
         const errorOutput = [];
+        core.debug('execGit() - args: ' + JSON.stringify(args));
         yield (0, exec_1.exec)('git', args, {
             silent: true,
             ignoreReturnCode: true,
@@ -30033,8 +30034,15 @@ function pushCurrentBranch() {
 }
 function addFileChanges(globPatterns) {
     return __awaiter(this, void 0, void 0, function* () {
+        const cwd = (0, cwd_1.getCwd)();
         const workspace = (0, cwd_1.getWorkspace)();
-        const workspacePaths = globPatterns.map((p) => (0, node_path_1.join)(workspace, p));
+        const resolvedWorkspace = (0, node_path_1.resolve)(workspace);
+        core.debug('addFileChanges() - resolvedWorkspace: ' + JSON.stringify(resolvedWorkspace));
+        let workspacePaths = globPatterns;
+        if (resolvedWorkspace.includes(cwd)) {
+            core.notice('addFileChanges() - "workspace" is a subdirectory, updating globPatterns');
+            workspacePaths = globPatterns.map((p) => (0, node_path_1.join)((0, node_path_1.relative)(cwd, resolvedWorkspace), p));
+        }
         yield execGit(['add', '--', ...workspacePaths]);
     });
 }
@@ -30400,10 +30408,10 @@ function run() {
             core.debug('* repo');
             const inputRepo = (0, input_1.getInput)('repo');
             const selectedRepo = inputRepo ? inputRepo : repo;
-            core.warning('Pushing local and current branch to remote before proceeding');
             if (selectedOwner == owner &&
                 selectedRepo == repo &&
                 selectedBranch !== branch) {
+                core.warning('Pushing local and current branch to remote before proceeding');
                 // Git commands
                 yield (0, git_1.switchBranch)(selectedBranch);
                 yield (0, git_1.pushCurrentBranch)();
