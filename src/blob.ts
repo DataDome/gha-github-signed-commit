@@ -6,7 +6,7 @@ import { Readable } from 'node:stream'
 import { finished } from 'node:stream/promises'
 import { FileAddition } from '@octokit/graphql-schema'
 
-import { getCwd, getWorkspace } from './utils/cwd'
+import { getCwd } from './utils/cwd'
 import Base64Encoder from './stream/base64-encoder'
 
 export class Blob {
@@ -17,18 +17,19 @@ export class Blob {
 
   constructor(path: string) {
     const cwd = getCwd()
-    const workspace = getWorkspace()
-
-    core.debug('Blob.constructor() - Add workspace directory to filepath')
-    const tmpPath = join(workspace, path)
 
     // Add GHA cwd
-    this.absolutePath = tmpPath.startsWith(cwd) ? tmpPath : join(cwd, tmpPath)
+    this.absolutePath = path.startsWith(cwd) ? path : join(cwd, path)
+    core.debug(
+      'Blob.constructor() - this.absolutePath: ' +
+        JSON.stringify(this.absolutePath)
+    )
 
     // Remove GHA cwd
     this.path = path.startsWith(cwd)
       ? path.replace(new RegExp(cwd, 'g'), '')
       : path
+    core.debug('Blob.constructor() - this.path: ' + JSON.stringify(this.path))
   }
 
   get streamable(): Readable {
@@ -49,8 +50,8 @@ export class Blob {
       if (Buffer.isBuffer(chunk)) chunks.push(chunk)
       else if (typeof chunk === 'string') chunks.push(Buffer.from(chunk))
 
-      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
       core.debug(
+        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
         `Blob.load() - filepath ${this.absolutePath}, received blob: ${chunk}`
       )
     })

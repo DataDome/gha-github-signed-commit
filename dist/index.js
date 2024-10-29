@@ -29857,15 +29857,15 @@ const base64_encoder_1 = __importDefault(__nccwpck_require__(5564));
 class Blob {
     constructor(path) {
         const cwd = (0, cwd_1.getCwd)();
-        const workspace = (0, cwd_1.getWorkspace)();
-        core.debug('Blob.constructor() - Add workspace directory to filepath');
-        const tmpPath = (0, node_path_1.join)(workspace, path);
         // Add GHA cwd
-        this.absolutePath = tmpPath.startsWith(cwd) ? tmpPath : (0, node_path_1.join)(cwd, tmpPath);
+        this.absolutePath = path.startsWith(cwd) ? path : (0, node_path_1.join)(cwd, path);
+        core.debug('Blob.constructor() - this.absolutePath: ' +
+            JSON.stringify(this.absolutePath));
         // Remove GHA cwd
         this.path = path.startsWith(cwd)
             ? path.replace(new RegExp(cwd, 'g'), '')
             : path;
+        core.debug('Blob.constructor() - this.path: ' + JSON.stringify(this.path));
     }
     get streamable() {
         if (!fs.existsSync(this.absolutePath)) {
@@ -29884,8 +29884,9 @@ class Blob {
                     chunks.push(chunk);
                 else if (typeof chunk === 'string')
                     chunks.push(node_buffer_1.Buffer.from(chunk));
+                core.debug(
                 // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-                core.debug(`Blob.load() - filepath ${this.absolutePath}, received blob: ${chunk}`);
+                `Blob.load() - filepath ${this.absolutePath}, received blob: ${chunk}`);
             });
             stream.on('error', (err) => {
                 throw new Error(`Read file failed, error: ${err.message}, path: ${this.absolutePath}`);
@@ -29993,14 +29994,10 @@ function execGit(args) {
         const debugOutput = [];
         const warningOutput = [];
         const errorOutput = [];
-        const defaultArgs = [];
         // Handle workspace
         const workspace = (0, cwd_1.getWorkspace)();
-        if (workspace !== '') {
-            defaultArgs.push('-C');
-            defaultArgs.push(workspace);
-            core.debug('execGit() - Adding GHA parameter "workspace" to git cli args');
-        }
+        const defaultArgs = ['-C', workspace];
+        core.debug('execGit() - Adding GHA parameter "workspace" to git cli args');
         core.debug('execGit() - defaultArgs: ' + JSON.stringify(defaultArgs));
         core.debug('execGit() - args parameter: ' + JSON.stringify(args));
         const mergedArgs = defaultArgs.concat(args);

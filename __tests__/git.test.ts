@@ -15,13 +15,16 @@ describe('Git CLI', () => {
   })
 
   describe('git checkout', () => {
+    beforeEach(() => {
+      jest.spyOn(cwd, 'getWorkspace').mockReturnValue('/test-workspace')
+    })
+
     it('should create new branch', async () => {
       const execMock = jest.spyOn(exec, 'exec').mockResolvedValue(0)
-
       await switchBranch('new-branch')
       expect(execMock).toHaveBeenCalledWith(
         'git',
-        ['checkout', '-b', 'new-branch'],
+        ['-C', '/test-workspace', 'checkout', '-b', 'new-branch'],
         expect.objectContaining({
           listeners: { stdline: expect.anything(), errline: expect.anything() },
         })
@@ -89,6 +92,10 @@ describe('Git CLI', () => {
   })
 
   describe('git push', () => {
+    beforeEach(() => {
+      jest.spyOn(cwd, 'getWorkspace').mockReturnValue('/test-workspace')
+    })
+
     it('should push new branch', async () => {
       const execMock = jest.spyOn(exec, 'exec').mockResolvedValue(0)
       const getInput = jest
@@ -98,7 +105,15 @@ describe('Git CLI', () => {
       await pushCurrentBranch()
       expect(execMock).toHaveBeenCalledWith(
         'git',
-        ['push', '--porcelain', '--set-upstream', 'origin', 'HEAD'],
+        [
+          '-C',
+          '/test-workspace',
+          'push',
+          '--porcelain',
+          '--set-upstream',
+          'origin',
+          'HEAD',
+        ],
         expect.objectContaining({
           listeners: { stdline: expect.anything(), errline: expect.anything() },
         })
@@ -113,7 +128,16 @@ describe('Git CLI', () => {
       expect(execMock).toHaveBeenCalled()
       expect(execMock).toHaveBeenCalledWith(
         'git',
-        ['push', '--force', '--porcelain', '--set-upstream', 'origin', 'HEAD'],
+        [
+          '-C',
+          '/test-workspace',
+          'push',
+          '--force',
+          '--porcelain',
+          '--set-upstream',
+          'origin',
+          'HEAD',
+        ],
         expect.objectContaining({
           listeners: { stdline: expect.anything(), errline: expect.anything() },
         })
@@ -184,7 +208,7 @@ describe('Git CLI', () => {
       jest.spyOn(cwd, 'getWorkspace').mockReturnValue('/test-workspace')
     })
 
-    it('should ensure file paths are within curent working directory', async () => {
+    it('should ensure file paths are within current working directory', async () => {
       const execMock = jest.spyOn(exec, 'exec').mockResolvedValue(0)
 
       await addFileChanges(['*.ts', '~/.bashrc'])
@@ -268,6 +292,10 @@ describe('Git CLI', () => {
       'D  tests/runner.test.ts',
       'A  tests/run.test.ts',
     ]
+
+    beforeEach(() => {
+      jest.spyOn(cwd, 'getWorkspace').mockReturnValue('/test-workspace')
+    })
 
     it('should parse ouput into file changes', async () => {
       const execMock = jest

@@ -13,15 +13,10 @@ async function execGit(args: string[]) {
   const warningOutput: string[] = []
   const errorOutput: string[] = []
 
-  const defaultArgs: string[] = []
-
   // Handle workspace
   const workspace = getWorkspace()
-  if (workspace !== '') {
-    defaultArgs.push('-C')
-    defaultArgs.push(workspace)
-    core.debug('execGit() - Adding GHA parameter "workspace" to git cli args')
-  }
+  const defaultArgs: string[] = ['-C', workspace]
+  core.debug('execGit() - Adding GHA parameter "workspace" to git cli args')
 
   core.debug('execGit() - defaultArgs: ' + JSON.stringify(defaultArgs))
   core.debug('execGit() - args parameter: ' + JSON.stringify(args))
