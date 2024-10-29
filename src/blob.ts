@@ -10,35 +10,30 @@ import { getCwd, getWorkspace } from './utils/cwd'
 import Base64Encoder from './stream/base64-encoder'
 
 export class Blob {
-  // Returned as a property of FileChange object
-  path: string
   // Used for content access
   absolutePath: string
+  // Returned as a property of FileChange object
+  path: string
 
   constructor(path: string) {
     const cwd = getCwd()
     const workspace = getWorkspace()
 
-    // Add GHA cwd
-    if (cwd.includes(workspace)) {
+    if (cwd === workspace || cwd.includes(workspace)) {
       this.absolutePath = path.startsWith(cwd) ? path : join(cwd, path)
-    } else if (cwd === workspace) {
-      this.absolutePath = path.startsWith(cwd) ? path : join(cwd, path)
+      this.path = path.startsWith(cwd)
+        ? path.replace(new RegExp(cwd, 'g'), '')
+        : path
     } else {
       this.absolutePath = join(cwd, workspace, path)
+      this.path = path.startsWith(workspace)
+        ? path.replace(new RegExp(workspace, 'g'), '')
+        : path
     }
     core.debug(
       'Blob.constructor() - this.absolutePath: ' +
         JSON.stringify(this.absolutePath)
     )
-
-    // Remove GHA cwd
-    const tmpPath = path.startsWith(cwd)
-      ? path.replace(new RegExp(cwd, 'g'), '')
-      : path
-    this.path = tmpPath.startsWith(workspace)
-      ? tmpPath.replace(new RegExp(workspace, 'g'), '')
-      : tmpPath
     core.debug('Blob.constructor() - this.path: ' + JSON.stringify(this.path))
   }
 

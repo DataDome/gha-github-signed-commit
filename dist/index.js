@@ -29858,25 +29858,20 @@ class Blob {
     constructor(path) {
         const cwd = (0, cwd_1.getCwd)();
         const workspace = (0, cwd_1.getWorkspace)();
-        // Add GHA cwd
-        if (cwd.includes(workspace)) {
+        if (cwd === workspace || cwd.includes(workspace)) {
             this.absolutePath = path.startsWith(cwd) ? path : (0, node_path_1.join)(cwd, path);
-        }
-        else if (cwd === workspace) {
-            this.absolutePath = path.startsWith(cwd) ? path : (0, node_path_1.join)(cwd, path);
+            this.path = path.startsWith(cwd)
+                ? path.replace(new RegExp(cwd, 'g'), '')
+                : path;
         }
         else {
             this.absolutePath = (0, node_path_1.join)(cwd, workspace, path);
+            this.path = path.startsWith(workspace)
+                ? path.replace(new RegExp(workspace, 'g'), '')
+                : path;
         }
         core.debug('Blob.constructor() - this.absolutePath: ' +
             JSON.stringify(this.absolutePath));
-        // Remove GHA cwd
-        const tmpPath = path.startsWith(cwd)
-            ? path.replace(new RegExp(cwd, 'g'), '')
-            : path;
-        this.path = tmpPath.startsWith(workspace)
-            ? tmpPath.replace(new RegExp(workspace, 'g'), '')
-            : tmpPath;
         core.debug('Blob.constructor() - this.path: ' + JSON.stringify(this.path));
     }
     get streamable() {
