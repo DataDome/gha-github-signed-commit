@@ -6,7 +6,7 @@ import { Readable } from 'node:stream'
 import { finished } from 'node:stream/promises'
 import { FileAddition } from '@octokit/graphql-schema'
 
-import { getCwd } from './utils/cwd'
+import { getCwd, getWorkspace } from './utils/cwd'
 import Base64Encoder from './stream/base64-encoder'
 
 export class Blob {
@@ -17,18 +17,28 @@ export class Blob {
 
   constructor(path: string) {
     const cwd = getCwd()
+    const workspace = getWorkspace()
 
     // Add GHA cwd
-    this.absolutePath = path.startsWith(cwd) ? path : join(cwd, path)
+    if (cwd.includes(workspace)) {
+      this.absolutePath = path.startsWith(cwd) ? path : join(cwd, path)
+    } else if (cwd === workspace) {
+      this.absolutePath = path.startsWith(cwd) ? path : join(cwd, path)
+    } else {
+      this.absolutePath = join(cwd, workspace, path)
+    }
     core.debug(
       'Blob.constructor() - this.absolutePath: ' +
         JSON.stringify(this.absolutePath)
     )
 
     // Remove GHA cwd
-    this.path = path.startsWith(cwd)
+    const tmpPath = path.startsWith(cwd)
       ? path.replace(new RegExp(cwd, 'g'), '')
       : path
+    this.path = tmpPath.startsWith(workspace)
+      ? tmpPath.replace(new RegExp(workspace, 'g'), '')
+      : tmpPath
     core.debug('Blob.constructor() - this.path: ' + JSON.stringify(this.path))
   }
 

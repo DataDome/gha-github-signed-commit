@@ -29857,14 +29857,26 @@ const base64_encoder_1 = __importDefault(__nccwpck_require__(5564));
 class Blob {
     constructor(path) {
         const cwd = (0, cwd_1.getCwd)();
+        const workspace = (0, cwd_1.getWorkspace)();
         // Add GHA cwd
-        this.absolutePath = path.startsWith(cwd) ? path : (0, node_path_1.join)(cwd, path);
+        if (cwd.includes(workspace)) {
+            this.absolutePath = path.startsWith(cwd) ? path : (0, node_path_1.join)(cwd, path);
+        }
+        else if (cwd === workspace) {
+            this.absolutePath = path.startsWith(cwd) ? path : (0, node_path_1.join)(cwd, path);
+        }
+        else {
+            this.absolutePath = (0, node_path_1.join)(cwd, workspace, path);
+        }
         core.debug('Blob.constructor() - this.absolutePath: ' +
             JSON.stringify(this.absolutePath));
         // Remove GHA cwd
-        this.path = path.startsWith(cwd)
+        const tmpPath = path.startsWith(cwd)
             ? path.replace(new RegExp(cwd, 'g'), '')
             : path;
+        this.path = tmpPath.startsWith(workspace)
+            ? tmpPath.replace(new RegExp(workspace, 'g'), '')
+            : tmpPath;
         core.debug('Blob.constructor() - this.path: ' + JSON.stringify(this.path));
     }
     get streamable() {
