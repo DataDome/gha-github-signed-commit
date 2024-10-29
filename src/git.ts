@@ -1,5 +1,6 @@
 import * as core from '@actions/core'
 import { exec } from '@actions/exec'
+import { join } from 'node:path'
 import {
   FileChanges,
   FileAddition,
@@ -74,22 +75,26 @@ export async function addFileChanges(globPatterns: string[]) {
 function processFileChanges(output: string[]) {
   const additions: FileAddition[] = []
   const deletions: FileDeletion[] = []
+
+  // Handle workspace
+  const workspace = getWorkspace()
+
   for (const line of output) {
     const staged = line.charAt(0)
     const filePath = line.slice(3)
     switch (staged) {
       case 'D': {
-        deletions.push({ path: filePath })
+        deletions.push({ path: join(workspace, filePath) })
         break
       }
       case '?':
       case 'A':
       case 'M': {
-        additions.push({ path: filePath, contents: '' })
+        additions.push({ path: join(workspace, filePath), contents: '' })
         break
       }
       case 'R': {
-        const [from, to] = filePath.split('->')
+        const [from, to] = join(workspace, filePath).split('->')
         deletions.push({ path: from.trim() })
         additions.push({ path: to.trim(), contents: '' })
         break

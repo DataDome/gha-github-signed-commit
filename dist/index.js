@@ -29982,6 +29982,7 @@ exports.addFileChanges = addFileChanges;
 exports.getFileChanges = getFileChanges;
 const core = __importStar(__nccwpck_require__(7484));
 const exec_1 = __nccwpck_require__(5236);
+const node_path_1 = __nccwpck_require__(6760);
 const cwd_1 = __nccwpck_require__(9827);
 function execGit(args) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -30050,22 +30051,24 @@ function addFileChanges(globPatterns) {
 function processFileChanges(output) {
     const additions = [];
     const deletions = [];
+    // Handle workspace
+    const workspace = (0, cwd_1.getWorkspace)();
     for (const line of output) {
         const staged = line.charAt(0);
         const filePath = line.slice(3);
         switch (staged) {
             case 'D': {
-                deletions.push({ path: filePath });
+                deletions.push({ path: (0, node_path_1.join)(workspace, filePath) });
                 break;
             }
             case '?':
             case 'A':
             case 'M': {
-                additions.push({ path: filePath, contents: '' });
+                additions.push({ path: (0, node_path_1.join)(workspace, filePath), contents: '' });
                 break;
             }
             case 'R': {
-                const [from, to] = filePath.split('->');
+                const [from, to] = (0, node_path_1.join)(workspace, filePath).split('->');
                 deletions.push({ path: from.trim() });
                 additions.push({ path: to.trim(), contents: '' });
                 break;
@@ -30441,13 +30444,16 @@ function run() {
             let createdCommit;
             const filePaths = core.getMultilineInput('files');
             if (filePaths.length <= 0) {
-                core.debug('skip file commit, empty files input');
+                core.warning('skip file commit, empty files input');
             }
             else {
-                core.debug(`proceed with file commit, input: ${JSON.stringify(filePaths)}`);
-                core.debug('Adding files to git index according to "filePaths"');
+                core.info(`proceed with file commit, input: ${JSON.stringify(filePaths)}`);
+                core.info('Adding files to git index according to "filePaths"');
                 yield (0, git_1.addFileChanges)(filePaths);
-                core.debug('Getting changed files');
+                core.info('Getting changed files');
+                // NOTE: getFileChanges() returns a map of FileChanges (from '@octokit/graphql-schema').
+                //       The 'contents' property of each FileChange is hard coded to an empty string in processFileChanges().
+                //       This is expected.
                 const fileChanges = yield (0, git_1.getFileChanges)();
                 const fileCount = ((_d = (_c = fileChanges.additions) === null || _c === void 0 ? void 0 : _c.length) !== null && _d !== void 0 ? _d : 0) +
                     ((_f = (_e = fileChanges.deletions) === null || _e === void 0 ? void 0 : _e.length) !== null && _f !== void 0 ? _f : 0);
@@ -30484,11 +30490,11 @@ function run() {
             }
             const tag = (0, input_1.getInput)('tag');
             if (!tag) {
-                core.debug('skip commit tagging, empty tag input');
+                core.notice('skip commit tagging, empty tag input');
             }
             else {
                 const tagCommit = createdCommit !== null && createdCommit !== void 0 ? createdCommit : currentCommit;
-                core.debug(`proceed with commit tagging, input: ${tag}, commit: ${tagCommit.oid}`);
+                core.info(`proceed with commit tagging, input: ${tag}, commit: ${tagCommit.oid}`);
                 const tagResponse = yield core.group('tagging commit', () => __awaiter(this, void 0, void 0, function* () {
                     const startTime = Date.now();
                     const tagData = yield (0, graphql_1.createTagOnCommit)(tagCommit, tag, repository.id);

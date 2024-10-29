@@ -86,16 +86,17 @@ export async function run(): Promise<void> {
     let createdCommit: Commit | undefined
     const filePaths = core.getMultilineInput('files')
     if (filePaths.length <= 0) {
-      core.debug('skip file commit, empty files input')
+      core.warning('skip file commit, empty files input')
     } else {
-      core.debug(
-        `proceed with file commit, input: ${JSON.stringify(filePaths)}`
-      )
+      core.info(`proceed with file commit, input: ${JSON.stringify(filePaths)}`)
 
-      core.debug('Adding files to git index according to "filePaths"')
+      core.info('Adding files to git index according to "filePaths"')
       await addFileChanges(filePaths)
 
-      core.debug('Getting changed files')
+      core.info('Getting changed files')
+      // NOTE: getFileChanges() returns a map of FileChanges (from '@octokit/graphql-schema').
+      //       The 'contents' property of each FileChange is hard coded to an empty string in processFileChanges().
+      //       This is expected.
       const fileChanges = await getFileChanges()
       const fileCount =
         (fileChanges.additions?.length ?? 0) +
@@ -141,10 +142,10 @@ export async function run(): Promise<void> {
 
     const tag = getInput('tag')
     if (!tag) {
-      core.debug('skip commit tagging, empty tag input')
+      core.notice('skip commit tagging, empty tag input')
     } else {
       const tagCommit = createdCommit ?? currentCommit
-      core.debug(
+      core.info(
         `proceed with commit tagging, input: ${tag}, commit: ${tagCommit.oid as string}`
       )
       const tagResponse = await core.group('tagging commit', async () => {
