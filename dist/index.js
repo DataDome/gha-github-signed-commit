@@ -30365,7 +30365,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getContext = getContext;
 const github = __importStar(__nccwpck_require__(3228));
 function resolveCurrentBranch(ref) {
-    var _a, _b, _c, _d;
+    var _a, _b, _c;
     if (ref.startsWith('refs/heads/')) {
         return ref.replace(/refs\/heads\//g, '');
     }
@@ -30374,8 +30374,7 @@ function resolveCurrentBranch(ref) {
         return (_c = (_b = (_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.head) === null || _b === void 0 ? void 0 : _b.ref) !== null && _c !== void 0 ? _c : '';
     }
     else if (ref.startsWith('refs/tags/')) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
-        return (_d = github.context.payload.repo.default_branch) !== null && _d !== void 0 ? _d : '';
+        return '';
     }
     throw new Error(`Unsupported ref: ${ref}`);
 }
