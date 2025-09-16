@@ -55,6 +55,21 @@ jobs:
         tag: v1.0.3
 ```
 
+```yaml
+jobs:
+  <job-id>:
+    permissions:
+      contents: write # grant secrets.GITHUB_TOKEN permission to push file changes
+  
+    - name: Create empty commit
+      uses: ryancyq/github-signed-commit@v1
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        commit-message: Trigger rebuild
+        allow-empty: true
+```
+
 Note: The `GH_TOKEN` environment variable is **required** for GitHub API request authentication.
 
 ## Inputs
@@ -67,6 +82,7 @@ Note: The `GH_TOKEN` environment variable is **required** for GitHub API request
 | `branch-push-force` | **NO** | `--force` flag when running `git push <branch-name>`. |
 | `tag` | **NO** | Push tag for the new/current commit. |
 | `tag-only-if-file-changes` | **NO** | Push tag for new commit only when file changes present. **DEFAULT:** true |
+| `allow-empty` | **NO** | Allow creating commits even when no file changes are detected. **DEFAULT:** false |
 
 ## Outputs
 | Output | Description |

@@ -52,6 +52,11 @@ inputs:
       Push tag for new commit only when file changes present.
     required: false
     default: true
+  allow-empty:
+    description: |
+      Allow creating commits even when no file changes are detected.
+    required: false
+    default: false
 
 outputs:
   commit-sha:

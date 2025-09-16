@@ -86,7 +86,9 @@ export async function run(): Promise<void> {
 
     let createdCommit: Commit | undefined
     const filePaths = core.getMultilineInput('files')
-    if (filePaths.length <= 0) {
+    const allowEmpty = core.getBooleanInput('allow-empty')
+
+    if (filePaths.length <= 0 && !allowEmpty) {
       core.notice('skip file commit, empty files input')
     } else {
       core.debug(
@@ -110,8 +112,44 @@ export async function run(): Promise<void> {
 
       if (fileCount <= 0) {
         const skipTagCommit = core.getBooleanInput('tag-only-if-file-changes')
-        if (skipTagCommit) throw new NoFileChanges()
-        core.notice(new NoFileChanges().message)
+
+        if (!allowEmpty && skipTagCommit) throw new NoFileChanges()
+
+        if (allowEmpty) {
+          core.notice(
+            'No file changes detected, but proceeding with empty commit due to allow-empty option'
+          )
+          // Create empty commit
+          const commitMessage = core.getInput('commit-message', {
+            required: true,
+          })
+          core.debug(`commit message: ${commitMessage}`)
+          const createResponse = await core.group(
+            'committing empty commit',
+            async () => {
+              const startTime = Date.now()
+              const commitData = await createCommitOnBranch(
+                currentCommit,
+                commitMessage,
+                {
+                  repositoryNameWithOwner: repository.nameWithOwner,
+                  branchName: selectedBranch,
+                },
+                { additions: [], deletions: [] } // Empty file changes
+              )
+              const endTime = Date.now()
+              core.debug(`time taken: ${(endTime - startTime).toString()} ms`)
+              return commitData
+            }
+          )
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          createdCommit = createResponse.commit!
+          const commitSha = createdCommit.oid as string
+          core.info(`committed empty commit with ${commitSha}`)
+          core.setOutput('commit-sha', commitSha)
+        } else {
+          core.notice(new NoFileChanges().message)
+        }
       } else {
         const commitMessage = core.getInput('commit-message', {
           required: true,
@@ -166,7 +204,7 @@ export async function run(): Promise<void> {
       core.debug('completed commit tag')
     }
 
-    if (filePaths.length <= 0 && !tag) {
+    if (filePaths.length <= 0 && !tag && !allowEmpty) {
       core.setFailed('Neither files nor tag input has been configured')
     }
   } catch (error) {
