@@ -30493,7 +30493,8 @@ function run() {
             }
             let createdCommit;
             const filePaths = core.getMultilineInput('files');
-            if (filePaths.length <= 0) {
+            const allowEmpty = core.getBooleanInput('allow-empty');
+            if (filePaths.length <= 0 && !allowEmpty) {
                 core.notice('skip file commit, empty files input');
             }
             else {
@@ -30511,7 +30512,6 @@ function run() {
                 core.info(`detected ${fileCount.toString()} file changes`);
                 core.debug(`detect file changes: ${JSON.stringify(fileChanges)}`);
                 if (fileCount <= 0) {
-                    const allowEmpty = core.getBooleanInput('allow-empty');
                     const skipTagCommit = core.getBooleanInput('tag-only-if-file-changes');
                     if (!allowEmpty && skipTagCommit)
                         throw new errors_1.NoFileChanges();
@@ -30586,7 +30586,7 @@ function run() {
                 core.setOutput('tag', tagName);
                 core.debug('completed commit tag');
             }
-            if (filePaths.length <= 0 && !tag) {
+            if (filePaths.length <= 0 && !tag && !allowEmpty) {
                 core.setFailed('Neither files nor tag input has been configured');
             }
         }
