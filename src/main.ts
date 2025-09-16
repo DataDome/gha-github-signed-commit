@@ -111,11 +111,13 @@ export async function run(): Promise<void> {
       if (fileCount <= 0) {
         const allowEmpty = core.getBooleanInput('allow-empty')
         const skipTagCommit = core.getBooleanInput('tag-only-if-file-changes')
-        
+
         if (!allowEmpty && skipTagCommit) throw new NoFileChanges()
-        
+
         if (allowEmpty) {
-          core.notice('No file changes detected, but proceeding with empty commit due to allow-empty option')
+          core.notice(
+            'No file changes detected, but proceeding with empty commit due to allow-empty option'
+          )
           // Create empty commit
           const commitMessage = core.getInput('commit-message', {
             required: true,
