@@ -123,13 +123,15 @@ export async function createCommitOnBranch(
   currentCommit: Commit,
   commitMessage: string,
   branch: CommittableBranch,
-  fileChanges: FileChanges
+  fileChanges: FileChanges | null
 ): Promise<CreateCommitOnBranchPayload> {
-  if (fileChanges.additions) {
+  if (fileChanges?.additions) {
     const promises = fileChanges.additions.map((file) =>
       getBlob(file.path).load()
     )
     fileChanges.additions = await Promise.all(promises)
+  } else {
+    fileChanges = null
   }
 
   const commitInput: CreateCommitOnBranchInput = {
@@ -139,7 +141,7 @@ export async function createCommitOnBranch(
     message: {
       headline: commitMessage,
     },
-    fileChanges,
+    fileChanges
   }
 
   const { createCommitOnBranch } = await execGraphql<{
