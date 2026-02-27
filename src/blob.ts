@@ -27,7 +27,7 @@ export class Blob {
     }
 
     return fs
-      .createReadStream(this.absolutePath, { encoding: 'utf8' })
+      .createReadStream(this.absolutePath)
       .pipe(new Base64Encoder())
   }
 
