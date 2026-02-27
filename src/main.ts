@@ -15,6 +15,7 @@ import {
 } from './git'
 import { getCwd, getWorkdir } from './utils/cwd'
 import { getInput } from './utils/input'
+import { RepositoryWithCommitHistory } from './github/types'
 import {
   NoFileChanges,
   BranchNotFound,
@@ -40,6 +41,7 @@ export async function run(): Promise<void> {
     const inputRepo = getInput('repo')
     const selectedRepo = inputRepo ? inputRepo : repo
 
+    let justPushedBranch = false
     if (
       selectedOwner == owner &&
       selectedRepo == repo &&
@@ -51,25 +53,40 @@ export async function run(): Promise<void> {
       // Git commands
       await switchBranch(selectedBranch)
       await pushCurrentBranch()
+      justPushedBranch = true
     }
 
-    const repository = await core.group(
-      `fetching repository info for owner: ${selectedOwner}, repo: ${selectedRepo}, branch: ${selectedBranch}`,
-      async () => {
-        const startTime = Date.now()
-        const repositoryData = await getRepository(
-          selectedOwner,
-          selectedRepo,
-          selectedBranch
-        )
-        const endTime = Date.now()
-        core.debug(`time taken: ${(endTime - startTime).toString()} ms`)
-        return repositoryData
-      }
-    )
+    const maxAttempts = justPushedBranch ? 5 : 1
+    let repository: RepositoryWithCommitHistory | undefined
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      repository = await core.group(
+        `fetching repository info for owner: ${selectedOwner}, repo: ${selectedRepo}, branch: ${selectedBranch}`,
+        async () => {
+          const startTime = Date.now()
+          const repositoryData = await getRepository(
+            selectedOwner,
+            selectedRepo,
+            selectedBranch
+          )
+          const endTime = Date.now()
+          core.debug(`time taken: ${(endTime - startTime).toString()} ms`)
+          return repositoryData
+        }
+      )
+
+      if (repository.ref || attempt >= maxAttempts) break
+
+      core.info(
+        `Branch not yet available via API, retrying (${attempt.toString()}/${maxAttempts.toString()})...`
+      )
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const repoData = repository!
 
     core.info('Checking remote branches')
-    if (!repository.ref) {
+    if (!repoData.ref) {
       if (inputBranch) {
         throw new InputBranchNotFound(inputBranch)
       } else {
@@ -79,9 +96,9 @@ export async function run(): Promise<void> {
 
     core.info('Processing to create signed commit')
     core.debug('Get last (current?) commit')
-    const currentCommit = repository.ref.target.history?.nodes?.[0]
+    const currentCommit = repoData.ref.target.history?.nodes?.[0]
     if (!currentCommit) {
-      throw new BranchCommitNotFound(repository.ref.name)
+      throw new BranchCommitNotFound(repoData.ref.name)
     }
 
     let createdCommit: Commit | undefined
@@ -125,7 +142,7 @@ export async function run(): Promise<void> {
               currentCommit,
               commitMessage,
               {
-                repositoryNameWithOwner: repository.nameWithOwner,
+                repositoryNameWithOwner: repoData.nameWithOwner,
                 branchName: selectedBranch,
               },
               fileChanges
@@ -154,7 +171,7 @@ export async function run(): Promise<void> {
       )
       const tagResponse = await core.group('tagging commit', async () => {
         const startTime = Date.now()
-        const tagData = await createTagOnCommit(tagCommit, tag, repository.id)
+        const tagData = await createTagOnCommit(tagCommit, tag, repoData.id)
         const endTime = Date.now()
         core.debug(`time taken: ${(endTime - startTime).toString()} ms`)
         return tagData

@@ -30480,6 +30480,7 @@ function run() {
             core.debug('* repo');
             const inputRepo = (0, input_1.getInput)('repo');
             const selectedRepo = inputRepo ? inputRepo : repo;
+            let justPushedBranch = false;
             if (selectedOwner == owner &&
                 selectedRepo == repo &&
                 selectedBranch !== branch) {
@@ -30487,16 +30488,27 @@ function run() {
                 // Git commands
                 yield (0, git_1.switchBranch)(selectedBranch);
                 yield (0, git_1.pushCurrentBranch)();
+                justPushedBranch = true;
             }
-            const repository = yield core.group(`fetching repository info for owner: ${selectedOwner}, repo: ${selectedRepo}, branch: ${selectedBranch}`, () => __awaiter(this, void 0, void 0, function* () {
-                const startTime = Date.now();
-                const repositoryData = yield (0, graphql_1.getRepository)(selectedOwner, selectedRepo, selectedBranch);
-                const endTime = Date.now();
-                core.debug(`time taken: ${(endTime - startTime).toString()} ms`);
-                return repositoryData;
-            }));
+            const maxAttempts = justPushedBranch ? 5 : 1;
+            let repository;
+            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                repository = yield core.group(`fetching repository info for owner: ${selectedOwner}, repo: ${selectedRepo}, branch: ${selectedBranch}`, () => __awaiter(this, void 0, void 0, function* () {
+                    const startTime = Date.now();
+                    const repositoryData = yield (0, graphql_1.getRepository)(selectedOwner, selectedRepo, selectedBranch);
+                    const endTime = Date.now();
+                    core.debug(`time taken: ${(endTime - startTime).toString()} ms`);
+                    return repositoryData;
+                }));
+                if (repository.ref || attempt >= maxAttempts)
+                    break;
+                core.info(`Branch not yet available via API, retrying (${attempt.toString()}/${maxAttempts.toString()})...`);
+                yield new Promise((resolve) => setTimeout(resolve, 1000));
+            }
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const repoData = repository;
             core.info('Checking remote branches');
-            if (!repository.ref) {
+            if (!repoData.ref) {
                 if (inputBranch) {
                     throw new errors_1.InputBranchNotFound(inputBranch);
                 }
@@ -30506,9 +30518,9 @@ function run() {
             }
             core.info('Processing to create signed commit');
             core.debug('Get last (current?) commit');
-            const currentCommit = (_b = (_a = repository.ref.target.history) === null || _a === void 0 ? void 0 : _a.nodes) === null || _b === void 0 ? void 0 : _b[0];
+            const currentCommit = (_b = (_a = repoData.ref.target.history) === null || _a === void 0 ? void 0 : _a.nodes) === null || _b === void 0 ? void 0 : _b[0];
             if (!currentCommit) {
-                throw new errors_1.BranchCommitNotFound(repository.ref.name);
+                throw new errors_1.BranchCommitNotFound(repoData.ref.name);
             }
             let createdCommit;
             const filePaths = core.getMultilineInput('files');
@@ -30543,7 +30555,7 @@ function run() {
                     const createResponse = yield core.group('committing files', () => __awaiter(this, void 0, void 0, function* () {
                         const startTime = Date.now();
                         const commitData = yield (0, graphql_1.createCommitOnBranch)(currentCommit, commitMessage, {
-                            repositoryNameWithOwner: repository.nameWithOwner,
+                            repositoryNameWithOwner: repoData.nameWithOwner,
                             branchName: selectedBranch,
                         }, fileChanges);
                         const endTime = Date.now();
@@ -30567,7 +30579,7 @@ function run() {
                 core.debug(`proceed with commit tagging, input: ${tag}, commit: ${tagCommit.oid}`);
                 const tagResponse = yield core.group('tagging commit', () => __awaiter(this, void 0, void 0, function* () {
                     const startTime = Date.now();
-                    const tagData = yield (0, graphql_1.createTagOnCommit)(tagCommit, tag, repository.id);
+                    const tagData = yield (0, graphql_1.createTagOnCommit)(tagCommit, tag, repoData.id);
                     const endTime = Date.now();
                     core.debug(`time taken: ${(endTime - startTime).toString()} ms`);
                     return tagData;
