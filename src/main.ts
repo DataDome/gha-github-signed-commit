@@ -19,7 +19,6 @@ import {
   NoFileChanges,
   BranchNotFound,
   BranchCommitNotFound,
-  InputRepositoryInvalid,
   InputBranchNotFound,
 } from './errors'
 
