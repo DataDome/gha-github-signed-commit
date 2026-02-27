@@ -76,6 +76,15 @@ Note: The `GH_TOKEN` environment variable is **required** for GitHub API request
 | `commit-sha` | Full SHA of the signed commit. |
 | `tag` | Tag of the signed commit. |
 
+## Release
+
+This project follows [Conventional Commits](https://www.conventionalcommits.org/) and uses a manual release workflow.
+
+1. Ensure `dist/` is up-to-date by running `npm run bundle`
+2. Trigger the **Release** workflow via `workflow_dispatch` with the desired [semver](https://semver.org/) version
+    - The workflow bumps `package.json`, creates a signed commit, and tags `v{version}`
+3. The **Changelog** workflow automatically regenerates `CHANGELOG.md` from conventional commits using [git-cliff](https://git-cliff.org/)
+
 [ci_badge]: https://github.com/ryancyq/github-signed-commit/actions/workflows/ci.yml/badge.svg
 [ci_workflows]: https://github.com/ryancyq/github-signed-commit/actions/workflows/ci.yml
 [coverage_badge]: https://codecov.io/gh/ryancyq/github-signed-commit/graph/badge.svg?token=KZTD2F2MN2
